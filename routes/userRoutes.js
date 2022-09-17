@@ -56,85 +56,9 @@ const mailOptionSetup = (email, subject, data) => {
     secure: true,
   }
 }
-/**
-@swagger
-{
-    "components": {
-        "schemas": {
-            "User": {
-                "type": "object",
-                    "required": [
-                        "email"
-                    ],
-                        "properties": {
-                    "name": {
-                        "type": "string"
-                    },
-                     "phone": {
-                        "type": "string",
-                    },
-                     "email": {
-                        "type": "string",
-                        "format":"email"
-                    },
-                     "address": {
-                        "type": "string"
-                    },
-                     "role": {
-                        "type": "string"
-                    },
-                     "attribute": {
-                        "type": "string",
-                    }
-                }
-            }
-        }
-    }
-}
- */
+
 const actions = {
-  /**  
-     * @swagger
-     {    
-      "/user/login": {
-          "post": {
-              "tags": [
-                  "Auth"
-              ],
-                  "description": "Login as user",
-                      "produces": [
-                          "application/json"
-                      ],
-                          "requestBody": {
-                  "description": "Request Body",
-                      "content": {
-                      "application/json": {
-                          "schema": {
-                              "properties": {
-                                  "email": {
-                                      "type": "string"
-                                  },
-                                  "password": {
-                                      "type": "string"
-                                  }
-                              }
-                          }
-                      }
-                  }
-              },
-              "responses": {
-                  "200": {
-                      "description": "Logged in successfully"
-                  },
-                  "400":{
-                    "description": "Wrong Password"  
-                  }
-              }
-          }
-      }
-      
-     }*/
-  // Login User
+
   login: asyncMiddleware(async (req, res) => {
     let { email, password } = req.body
     let { EXPIRES_IN } = process.env
@@ -178,204 +102,62 @@ const actions = {
     }
   }),
 
-  /**  
-       * @swagger
-       {    
-        "/user": {
-            "post": {
-                "tags": [
-                    "User"
-                ],
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                    "description": "User registration",
-                        "produces": [
-                            "application/json"
-                        ],
-                            "requestBody": {
-                    "description": "Request Body",
-                        "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/User"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "User added successfully"
-                    },
-                    "400":{
-                      "description": "Something went wrong"  
-                    }
-                }
-            },
-            "get": {
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                    "tags": [
-                        "User"
-                    ],
-                        "description": "Get user by token",
-                            "produces": [
-                                "application/json"
-                            ],
-                                "responses": {
-                    "200": {
-                        "description": "User fetched successfully"
-                    },
-                    "400":{
-                      "description": "User not found"  
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                    "tags": [
-                        "Auth"
-                    ],
-                        "description": "Reset password",
-                            "produces": [
-                                "application/json"
-                            ],
-                                "requestBody": {
-                    "description": "Request Body",
-                        "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "password": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Password reset successfully"
-                    },
-                    "400":{
-                      "description": "User not found"  
-                    }
-                }
-            },
-            "delete": {
-                "tags": [
-                    "User"
-                ],
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                    "description": "Delete user",
-                        "produces": [
-                            "application/json"
-                        ],
-                            "parameters": [
-                                {
-                                    "in": "query",
-                                    "name": "id",
-                                    "type": "string",
-                                    "description": "User ID"
-                                },
-                                {
-                                    "in": "query",
-                                    "name": "page",
-                                    "type": "integer",
-                                    "description": "Page number"
-                                }
-                            ],
-                                "responses": {
-                    "200": {
-                        "description": "User deleted successfully"
-                    },
-                    "400":{
-                      "description": "User not found"  
-                    }
-                }
-            }
-        }, 
-       }*/
-  userRegistration: asyncMiddleware(async (req, res) => {
-    let { email, role } = req.body
+
+  Signup: asyncMiddleware(async (req, res) => {
+    let { email } = req.body
     let user = await UserModel.findOne({ email: email })
     if (user) {
-      res.status(status.success.accepted).json({
+      res.status(statusCodes.success.accepted).json({
         message: 'Email already exists',
         status: 400,
       })
     } else {
       let random = Math.random().toString(36).slice(2)
-      req.body.password = await passwordUtils.hashPassword(random)
-      if (role.toLowerCase() == 'mover') {
-        let arr = [
-          { day: 'Monday' },
-          { day: 'Tuesday' },
-          { day: 'Wednesday' },
-          { day: 'Thursday' },
-          { day: 'Friday' },
-          { day: 'Saturday' },
-          { day: 'Sunday' },
-        ]
-        req.body.weeklySchedule = arr
-        var newUser = new UserModel({ ...req.body })
-      } else {
-        var newUser = new UserModel({ ...req.body })
-      }
+      req.body.password = await passwordHash.hashPassword(random)
+      let newUser = new UserModel({ ...req.body })
       let savedUser = await newUser.save()
       if (savedUser) {
-        let newuser = await UserModel.findOne({ email: email }).select(
-          '+password',
-        )
-        let smtpTransport = initializeSMTP()
-        ejs.renderFile(
-          path.join(__dirname, '../email-templates/credentials.ejs'),
-          { name: newuser.name, email: newuser.email, password: random },
-          async function (err, data) {
-            if (err) {
-              res.status(status.success.created).json({
-                message: 'Something went wrong',
-                status: 400,
-              })
-            } else {
-              let mailOptions = mailOptionSetup(
-                newuser.email,
-                'Credentials For Athens Moving Experts',
-                data,
-              )
-              try {
-                await smtpTransport.sendMail(mailOptions)
-                res.status(status.success.created).json({
+        let newUser = await UserModel.findOne({ email: email })
+        // let smtpTransport = initializeSMTP()
+        // ejs.renderFile(
+        //   path.join(__dirname, '../email-templates/credentials.ejs'),
+        //   { name: newUser.name, email: newuser.email, password: random },
+        //   async function (err, data) {
+        //     if (err) {
+        //       res.status(status.success.created).json({
+        //         message: 'Something went wrong',
+        //         status: 400,
+        //       })
+        //     } else {
+        //       let mailOptions = mailOptionSetup(
+        //         newuser.email,
+        //         'Credentials For Athens Moving Experts',
+        //         data,
+        //       )
+        //       try {
+        //         await smtpTransport.sendMail(mailOptions)
+                res.status(statusCodes.success.created).json({
                   message: 'User added successfully',
+                  data:newUser,
                   status: 200,
                 })
-              } catch (e) {
-                res.status(status.success.created).json({
-                  message: 'Something went wrong',
-                  status: 400,
-                })
-              }
-            }
-          },
-        )
+        //       } catch (e) {
+        //         res.status(status.success.created).json({
+        //           message: 'Something went wrong',
+        //           status: 400,
+        //         })
+        //       }
+        //     }
+        //   },
+        // )
+        // res.status(statusCodes.success.accepted).json({
+        //   message: 'Email already exists',
+        //   status: 400,
+        // })
       } else {
-        res.status(status.success.created).json({
+        res.status(status.client.badRequest).json({
           message: 'Something went wrong',
-          status: 200,
+          status: 400,
         })
       }
     }
@@ -457,83 +239,6 @@ const actions = {
     }
   }),
 
-  /**  
-      * @swagger
-      {    
-       "/user/{id}": {
-           "get": {
-               "tags": [
-                   "User"
-               ],
-               "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                   "description": "Get user by id",
-                       "produces": [
-                           "application/json"
-                       ],
-                           "parameters": [
-                               {
-                                   "in": "path",
-                                   "name": "id",
-                                   "type": "string",
-                                   "description": "User ID"
-                               }
-                           ],
-                               "responses": {
-                   "200": {
-                       "description": "User fetched successfully"
-                   },
-                   "400":{
-                     "description": "User not found"  
-                   }
-               }
-           },
-           "put": {
-               "tags": [
-                   "User"
-               ],
-               "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                   "description": "Update user",
-                       "produces": [
-                           "application/json"
-                       ],
-                           "parameters": [
-                               {
-                                   "in": "path",
-                                   "name": "id",
-                                   "type": "string",
-                                   "description": "User ID"
-                               }
-                           ],
-                               "requestBody": {
-                   "description": "Request Body",
-                       "content": {
-                       "application/json": {
-                           "schema": {
-                               "$ref": "#/components/schemas/User"
-                           }
-                       }
-                   }
-               },
-               "responses": {
-                   "200": {
-                       "description": "Profile updated successfully"
-                   },
-                   "400":{
-                     "description": "Email already exist"  
-                   }
-               }
-           }
-       },
-       
-      }*/
   getUser: asyncMiddleware(async (req, res) => {
     let { id } = req.params
     let user = await UserModel.findById({ _id: id })
@@ -582,62 +287,7 @@ const actions = {
     }
   }),
 
-  /**  
-  * @swagger
-  {    
-   "/user/all": {
-       "post": {
-           "tags": [
-               "User"
-           ],
-           "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-               "description": "Get all users",
-                   "produces": [
-                       "application/json"
-                   ],
-                       "requestBody": {
-               "description": "Request Body",
-                   "content": {
-                   "application/json": {
-                       "schema": {
-                           "properties": {
-                               "query": {
-                                   "type": "string",
-                                   "example":"Name or Address"
-                               },
-                               "filter": {
-                                   "type": "object",
-                                       "properties": {
-                                       "type": {
-                                           "type": "string",
-                                           "example":"Role of user"
-                                       }
-                                   }
-                               },
-                               "page": {
-                                   "type": "integer"
-                               }
-                           }
-                       }
-                   }
-               }
-           },
-           "responses": {
-               "200": {
-                   "description": "Users fetched successfully"
-               },
-               "400":{
-                 "description": "Something went wrong"  
-               }
-           }
-       }
-   }
-   
-  }*/
+  
   getAllUsers: asyncMiddleware(async (req, res) => {
     let { query, filter } = req.body
     let users = await UserModel.paginate(
@@ -676,44 +326,7 @@ const actions = {
     }
   }),
 
-  /**  
-  * @swagger
-  {    
-   "/user/forgot-password": {
-       "post": {
-           "tags": [
-               "Auth"
-           ],
-               "description": "Forget password",
-                   "produces": [
-                       "application/json"
-                   ],
-                       "requestBody": {
-               "description": "Request Body",
-                   "content": {
-                   "application/json": {
-                       "schema": {
-                           "properties": {
-                               "email": {
-                                   "type": "string"
-                               }
-                           }
-                       }
-                   }
-               }
-           },
-           "responses": {
-               "200": {
-                   "description": "Check your mail"
-               },
-               "400":{
-                 "description": "Something went wrong"  
-               }
-           }
-       }
-   },
-   
-  }*/
+  
   forgotPassword: asyncMiddleware(async (req, res) => {
     let { email } = req.body
     let user = await UserModel.findOne({ email: email })
@@ -818,44 +431,7 @@ const actions = {
     }
   }),
 
-  /**  
-   * @swagger
-   {    
-    "/user/verify": {
-        "post": {
-                "tags": [
-                    "Auth"
-                ],
-                    "description": "Verify code",
-                        "produces": [
-                            "application/json"
-                        ],
-                            "requestBody": {
-                "description": "Request Body",
-                    "content": {
-                    "application/json": {
-                        "schema": {
-                            "properties": {
-                                "code": {
-                                    "type": "integer"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "responses": {
-                "200": {
-                    "description": "Check your mail"
-                },
-                "400":{
-                  "description": "Enter valid code"  
-                }
-            }
-        }
-    }
-    
-   }*/
+  
   codeVerification: asyncMiddleware(async (req, res) => {
     let { code } = req.body
     let { email } = req.decoded
@@ -917,7 +493,7 @@ router.get('/', jwt.verifyJwt, actions.getUserById)
 router.get('/:id', jwt.verifyJwt, actions.getUser)
 
 //ADD
-router.post('/', jwt.verifyJwt, actions.userRegistration)
+router.post('/', actions.Signup)
 router.post('/token', jwt.verifyJwt, actions.generateAccessToken)
 
 //UPDATE
