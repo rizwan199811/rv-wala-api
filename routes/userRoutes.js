@@ -74,7 +74,7 @@ const actions = {
         if (verified) {
           let loggedUser = user.toObject()
           delete loggedUser.password
-          res.status(status.success.accepted).json({
+          res.status(statusCodes.success.accepted).json({
             message: 'Logged In Successfully',
             data: loggedUser,
             token: 'Bearer ' + (await jwt.signJwt({ id: user.id }, EXPIRES_IN)),
@@ -83,19 +83,19 @@ const actions = {
             status: 200,
           })
         } else {
-          res.status(status.success.created).json({
+          res.status(statusCodes.success.created).json({
             message: 'Wrong Password',
             status: 400,
           })
         }
       } else {
-        res.status(status.success.created).json({
+        res.status(statusCodes.success.created).json({
           message: 'Your account is de-activated',
           status: 400,
         })
       }
     } else {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'User not found',
         status: 400,
       })

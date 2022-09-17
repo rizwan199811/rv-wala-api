@@ -12,11 +12,17 @@ app.use(express.json({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 config.initialize()
+
+app.use(cors({
+    origin: ['http://localhost:3000','https://rv-wala.herokuapp.com']
+}));
 app.use('/api', routes);
 
 app.get('/', (req, res) => {
     res.send('Working!!!')
 })
+
+
 
 
 
