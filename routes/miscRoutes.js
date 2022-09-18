@@ -33,9 +33,12 @@ const parser = multer({
 const actions = {
 
   uploadFiles: asyncMiddleware(async (req, res) => {
+     let files =req.files;
+     console.log({files:-req.files})
     if(files.length>0){
         res.status(statusCodes.success.accepted).json({
             message: 'Files uploaded successfully',
+            data:files,
             status: statusCodes.success.accepted,
           })
     }
@@ -70,7 +73,7 @@ const actions = {
  
 }
 
-router.post('/upload-file',jwt.verifyJwt,parser.array('files') ,actions.uploadFiles)
+router.post('/upload-file',parser.array('files') ,actions.uploadFiles)
 router.post('/get-seed' ,actions.getSeedData)
 
 module.exports = router
