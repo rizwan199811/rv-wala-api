@@ -40,63 +40,29 @@ const actions = {
   }),
 
 
-  signUp: asyncMiddleware(async (req, res) => {
-    let { email ,password} = req.body
-    let user = await UserModel.findOne({ email: email })
+  listRV: asyncMiddleware(async (req, res) => {
+    let {id} =req.decoded;
+    let {page,limit} =req.body;
+    let user = await UserModel.findById(id)
     if (user) {
-      res.status(statusCodes.success.accepted).json({
-        message: 'Email already exists',
+     let rvs =  await  RVModel.paginate({},{
+      page:page,
+      limit:limit,
+      lean:true
+     })
+    res.status(statusCodes.success.created).json({
+        message: 'RVs fetched successfully',
+        data:rvs,
+        status: 200,
+      })
+     
+    } else {
+      res.status(statusCodes.client.badRequest).json({
+        message: 'User not found',
         status: 400,
       })
-    } else {
-      req.body.password = await passwordHash.hashPassword(password)
-      let newUser = new UserModel({ ...req.body })
-      let savedUser = await newUser.save()
-      if (savedUser) {
-        let newUser = await UserModel.findOne({ email: email })
-        // let smtpTransport = initializeSMTP()
-        // ejs.renderFile(
-        //   path.join(__dirname, '../email-templates/credentials.ejs'),
-        //   { name: newUser.name, email: newuser.email, password: random },
-        //   async function (err, data) {
-        //     if (err) {
-        //       res.status(status.success.created).json({
-        //         message: 'Something went wrong',
-        //         status: 400,
-        //       })
-        //     } else {
-        //       let mailOptions = mailOptionSetup(
-        //         newuser.email,
-        //         'Credentials For Athens Moving Experts',
-        //         data,
-        //       )
-        //       try {
-        //         await smtpTransport.sendMail(mailOptions)
-                res.status(statusCodes.success.created).json({
-                  message: 'User added successfully',
-                  data:newUser,
-                  status: 200,
-                })
-        //       } catch (e) {
-        //         res.status(status.success.created).json({
-        //           message: 'Something went wrong',
-        //           status: 400,
-        //         })
-        //       }
-        //     }
-        //   },
-        // )
-        // res.status(statusCodes.success.accepted).json({
-        //   message: 'Email already exists',
-        //   status: 400,
-        // })
-      } else {
-        res.status(statusCodes.client.badRequest).json({
-          message: 'Something went wrong',
-          status: 400,
-        })
-      }
     }
+
   })
  
  
@@ -104,7 +70,7 @@ const actions = {
 
 
 //ADD
-router.post('/signup', actions.signUp)
+router.post('/list', jwt.verifyJwt,actions.listRV)
 router.post('/',jwt.verifyJwt,actions.createRV)
 
 module.exports = router
