@@ -107,7 +107,7 @@ const actions = {
     let { email } = req.body
     let user = await UserModel.findOne({ email: email })
     if (user) {
-      res.status(statusCodes.success.accepted).json({
+      res.status(statusCodes.client.badRequest).json({
         message: 'Email already exists',
         status: 400,
       })
@@ -118,44 +118,14 @@ const actions = {
       let savedUser = await newUser.save()
       if (savedUser) {
         let newUser = await UserModel.findOne({ email: email })
-        // let smtpTransport = initializeSMTP()
-        // ejs.renderFile(
-        //   path.join(__dirname, '../email-templates/credentials.ejs'),
-        //   { name: newUser.name, email: newuser.email, password: random },
-        //   async function (err, data) {
-        //     if (err) {
-        //       res.status(status.success.created).json({
-        //         message: 'Something went wrong',
-        //         status: 400,
-        //       })
-        //     } else {
-        //       let mailOptions = mailOptionSetup(
-        //         newuser.email,
-        //         'Credentials For Athens Moving Experts',
-        //         data,
-        //       )
-        //       try {
-        //         await smtpTransport.sendMail(mailOptions)
                 res.status(statusCodes.success.created).json({
                   message: 'User added successfully',
                   data:newUser,
                   status: 200,
                 })
-        //       } catch (e) {
-        //         res.status(status.success.created).json({
-        //           message: 'Something went wrong',
-        //           status: 400,
-        //         })
-        //       }
-        //     }
-        //   },
-        // )
-        // res.status(statusCodes.success.accepted).json({
-        //   message: 'Email already exists',
-        //   status: 400,
-        // })
+  
       } else {
-        res.status(status.client.badRequest).json({
+        res.status(statusCodes.client.badRequest).json({
           message: 'Something went wrong',
           status: 400,
         })
