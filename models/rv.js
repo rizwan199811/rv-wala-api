@@ -8,7 +8,7 @@ var rvSchema = new mongoose.Schema({
         required: true
       },
 },
-{ strict: false }
+{ strict: false , timestamps: true }
 );
 rvSchema.plugin(mongoosePaginate); 
 var rvModel = mongoose.model('rv', rvSchema);

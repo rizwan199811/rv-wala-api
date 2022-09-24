@@ -29,8 +29,11 @@ app.get('/', (req, res) => {
 app.use(function (err, req, res, next) {
     console.error(err.stack)
     console.log(err.message)
-    console.log(err)
-    // res.status(500).send('Something broke!')
+    console.log({err})
+    res.status(500).json({
+        message: err.message,
+        status: 500,
+      }) 
 })
 
 app.listen(port, () => console.log(`RV-wala listening at ${port}`))

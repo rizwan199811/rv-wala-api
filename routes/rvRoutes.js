@@ -71,14 +71,16 @@ const actions = {
         status: 400,
       })
     }
-    let rv = await RVModel.findById(RVID)
+    let rv = await RVModel.findById(RVID).populate('user').lean(true)
+    
     if (!rv) {
       return res.status(statusCodes.client.badRequest).json({
         message: 'RV not found',
         status: 400,
       })
     }
-
+    let listingCount = await RVModel.count({user:userID});
+    rv.listingCount = listingCount;
     res.status(statusCodes.success.created).json({
       message: 'RV fetched successfully',
       data: rv,

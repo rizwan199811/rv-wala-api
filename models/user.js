@@ -6,7 +6,7 @@ var userSchema = new mongoose.Schema({
         type:String
     }
 },
-{ strict: false }
+{ strict: false , timestamps: true }
 );
 
 var userModel = mongoose.model('user', userSchema);

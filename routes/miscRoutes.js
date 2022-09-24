@@ -33,21 +33,27 @@ const parser = multer({
 const actions = {
 
   uploadFiles: asyncMiddleware(async (req, res) => {
-     let files =req.files;
-     console.log({files:-req.files})
-    if(files.length>0){
-        res.status(statusCodes.success.accepted).json({
-            message: 'Files uploaded successfully',
-            data:files,
-            status: statusCodes.success.accepted,
-          })
+    try{
+      let files =req.files;
+      console.log({files:req.files})
+     if(files.length>0){
+         res.status(statusCodes.success.accepted).json({
+             message: 'Files uploaded successfully',
+             data:files,
+             status: statusCodes.success.accepted,
+           })
+     }
+     else{
+         res.status(statusCodes.client.badRequest).json({
+             message: 'Please upload photos',
+             status: statusCodes.client.badRequest,
+           }) 
+     }
     }
-    else{
-        res.status(statusCodes.client.badRequest).json({
-            message: 'Please upload photos',
-            status: statusCodes.client.badRequest,
-          }) 
+    catch(e){
+      console.log({e})
     }
+  
     
   }),
   getSeedData: asyncMiddleware(async (req, res) => {
