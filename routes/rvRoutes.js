@@ -90,7 +90,7 @@ const actions = {
 }
 
 //ADD
-router.post('/list', jwt.verifyJwt, actions.listRV)
+router.post('/list', actions.listRV)
 router.post('/', jwt.verifyJwt, actions.createRV)
 router.get('/:id', jwt.verifyJwt, actions.getSingleRV)
 module.exports = router
