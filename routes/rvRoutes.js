@@ -37,10 +37,8 @@ const actions = {
   }),
 
   listRV: asyncMiddleware(async (req, res) => {
-    let { id } = req.decoded
-    let { page, limit } = req.body
-    let user = await UserModel.findById(id)
-    if (user) {
+  
+    let { page, limit } = req.body;
       let rvs = await RVModel.paginate(
         {},
         {
@@ -54,12 +52,7 @@ const actions = {
         data: rvs,
         status: 200,
       })
-    } else {
-      res.status(statusCodes.client.badRequest).json({
-        message: 'User not found',
-        status: 400,
-      })
-    }
+    
   }),
   getSingleRV: asyncMiddleware(async (req, res) => {
     let { id: userID } = req.decoded
