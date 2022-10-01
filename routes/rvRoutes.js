@@ -45,6 +45,9 @@ const actions = {
          $gte:searchCriteria.price.min ,
       }
     }
+    if (searchCriteria.class) {
+      whereClause['RVInfo.type'] = searchCriteria.class
+    }
     console.log({ whereClause })
     let rvs = await RVModel.paginate(whereClause, {
       page: page,
