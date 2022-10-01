@@ -37,22 +37,25 @@ const actions = {
   }),
 
   listRV: asyncMiddleware(async (req, res) => {
-  
-    let { page, limit } = req.body;
-      let rvs = await RVModel.paginate(
-        {},
-        {
-          page: page,
-          limit: limit,
-          lean: true,
-        },
-      )
-      res.status(statusCodes.success.created).json({
-        message: 'RVs fetched successfully',
-        data: rvs,
-        status: 200,
-      })
-    
+    let { page, limit, searchCriteria } = req.body
+    let whereClause = {}
+    if (searchCriteria.price) {
+      whereClause['RVInfo.value'] = {
+         $lt:searchCriteria.price.max ,
+         $gte:searchCriteria.price.min ,
+      }
+    }
+    console.log({ whereClause })
+    let rvs = await RVModel.paginate(whereClause, {
+      page: page,
+      limit: limit,
+      lean: true,
+    })
+    res.status(statusCodes.success.created).json({
+      message: 'RVs fetched successfully',
+      data: rvs,
+      status: 200,
+    })
   }),
   getSingleRV: asyncMiddleware(async (req, res) => {
     let { id: userID } = req.decoded
@@ -65,15 +68,15 @@ const actions = {
       })
     }
     let rv = await RVModel.findById(RVID).populate('user').lean(true)
-    
+
     if (!rv) {
       return res.status(statusCodes.client.badRequest).json({
         message: 'RV not found',
         status: 400,
       })
     }
-    let listingCount = await RVModel.count({user:userID});
-    rv.listingCount = listingCount;
+    let listingCount = await RVModel.count({ user: userID })
+    rv.listingCount = listingCount
     res.status(statusCodes.success.created).json({
       message: 'RV fetched successfully',
       data: rv,
