@@ -38,17 +38,26 @@ const actions = {
 
   listRV: asyncMiddleware(async (req, res) => {
     let { page, limit, searchCriteria } = req.body
+    let { id } = req.decoded
+    // console.log(RVInfo)
     let whereClause = {}
     if (searchCriteria.price) {
       whereClause['RVInfo.value'] = {
-         $lt:searchCriteria.price.max ,
-         $gte:searchCriteria.price.min ,
+        $lt: searchCriteria.price.max,
+        $gte: searchCriteria.price.min,
       }
     }
     if (searchCriteria.class) {
       whereClause['RVInfo.type'] = searchCriteria.class
     }
+    if(id) {
+      whereClause['user'] = {
+        $ne: id 
+      }
+    }
     console.log({ whereClause })
+    let filterRvs = await RVModel.find({ user: { $ne: id } })
+    console.log(filterRvs.length)
     let rvs = await RVModel.paginate(whereClause, {
       page: page,
       limit: limit,
@@ -89,7 +98,7 @@ const actions = {
 }
 
 //ADD
-router.post('/list', actions.listRV)
+router.post('/list', jwt.verifyJwt, actions.listRV)
 router.post('/', jwt.verifyJwt, actions.createRV)
 router.get('/:id', jwt.verifyJwt, actions.getSingleRV)
 module.exports = router
