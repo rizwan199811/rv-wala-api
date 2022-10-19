@@ -16,10 +16,15 @@ const router = express.Router()
 const actions = {
 
   login: asyncMiddleware(async (req, res) => {
-    let { email, password } = req.body
-    let { EXPIRES_IN } = process.env
-
-    let user = await UserModel.findOne({ email: email }).select('+password')
+    let { email, password,is_admin } = req.body
+    let { EXPIRES_IN } = process.env;
+    let user;
+    if(is_admin){
+      user = await UserModel.findOne({ email: email , role :{$in: ["super_admin", "admin"]}}).select('+password')
+    }
+    else{
+      user = await UserModel.findOne({ email: email}).select('+password')
+    }
     if (user) {
       console.log({password})
         let verified =  passwordHash.comparePassword(
@@ -31,6 +36,7 @@ const actions = {
         if (verified) {
           let loggedUser = user.toObject()
           delete loggedUser.password
+       
           res.status(statusCodes.success.accepted).json({
             message: 'Logged In Successfully',
             data: loggedUser,
@@ -48,7 +54,7 @@ const actions = {
      
     } else {
       res.status(statusCodes.client.badRequest).json({
-        message: 'User not found',
+        message: 'Invalid credentials',
         status: 400,
       })
     }
