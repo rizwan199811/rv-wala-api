@@ -2,7 +2,8 @@ const fs = require('fs')
 // const SeedModel = require('./models/seed')
 const mongoose = require('mongoose');
 const UserModel = require('./models/user');
-const adminUser = require('./utils/superAdminUserData');
+const { passwordHash } = require('./utils');
+
 
 require('dotenv').config()
 
@@ -386,13 +387,21 @@ db.once('open', async function () {
   // }
 
 
-  const superAdminDocCount = await UserModel.find({ role: "superAdmin" }).countDocuments()
+  const superAdminDocCount = await UserModel.find({ role: "super_admin" }).countDocuments()
   console.log(superAdminDocCount)
   if (superAdminDocCount === 0) {
-    var superAdmin = null;
     try {
+      const adminUser = {
+        email: "adminuser@gmail.com",
+        role: "super_admin",
+        password: await passwordHash.hashPassword("pass123"),
+        userName: "rizwanAhmedSiddique",
+        fullName: "Rizwan Ahmed Siddique"
+      }
+   
       // Insert superAdmin User as seedData in DB
       console.log(adminUser)
+
       let superAdminUser = await UserModel.create(adminUser)
       console.log(superAdminUser)
     } catch (err) {
@@ -403,4 +412,3 @@ db.once('open', async function () {
 
   mongoose.disconnect();
 });
-
