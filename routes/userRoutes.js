@@ -29,19 +29,19 @@ const nodemailer = require('nodemailer')
 const initializeSMTP = () => {
   let smtpTransport = nodemailer.createTransport({
     service: 'Gmail',
-    // port: 465,
-    // auth: {
-    //     user: authConfig.user,
-    //     pass: authConfig.pass
-    // }
+    port: 465,
     auth: {
-      type: 'OAuth2',
-      user: process.env.EMAIL,
-      pass: process.env.PASSWORD,
-      clientId: process.env.OAUTH_CLIENTID,
-      clientSecret: process.env.OAUTH_CLIENT_SECRET,
-      refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+      user: 'rizwan.199811@gmail.com',
+      pass: 'opqmljhuohtxabkx',
     },
+    // auth: {
+    //   type: 'OAuth2',
+    //   user: process.env.EMAIL,
+    //   pass: process.env.PASSWORD,
+    //   clientId: process.env.OAUTH_CLIENTID,
+    //   clientSecret: process.env.OAUTH_CLIENT_SECRET,
+    //   refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+    // },
   })
 
   return smtpTransport
@@ -58,7 +58,6 @@ const mailOptionSetup = (email, subject, data) => {
 }
 
 const actions = {
-
   login: asyncMiddleware(async (req, res) => {
     let { email, password } = req.body
     let { EXPIRES_IN } = process.env
@@ -102,7 +101,6 @@ const actions = {
     }
   }),
 
-
   Signup: asyncMiddleware(async (req, res) => {
     let { email } = req.body
     let user = await UserModel.findOne({ email: email })
@@ -118,12 +116,11 @@ const actions = {
       let savedUser = await newUser.save()
       if (savedUser) {
         let newUser = await UserModel.findOne({ email: email })
-                res.status(statusCodes.success.created).json({
-                  message: 'User added successfully',
-                  data:newUser,
-                  status: 200,
-                })
-  
+        res.status(statusCodes.success.created).json({
+          message: 'User added successfully',
+          data: newUser,
+          status: 200,
+        })
       } else {
         res.status(statusCodes.client.badRequest).json({
           message: 'Something went wrong',
@@ -137,13 +134,13 @@ const actions = {
     id = mongoose.Types.ObjectId(id)
     let user = await UserModel.findOne({ _id: id }).populate('jobs')
     if (user) {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'User fetched successfully',
         data: user,
         status: 200,
       })
     } else {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'User not found',
         status: 400,
       })
@@ -162,18 +159,18 @@ const actions = {
         { new: true },
       )
       if (updatedUser) {
-        res.status(status.success.created).json({
+        res.status(statusCodes.success.created).json({
           message: 'Password updated successfully',
           status: 200,
         })
       } else {
-        res.status(status.success.created).json({
+        res.status(statusCodes.success.created).json({
           message: 'User not found',
           status: 400,
         })
       }
     } else {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'User not found',
         status: 400,
       })
@@ -196,13 +193,13 @@ const actions = {
         {},
         { page: page, sort: { created: -1 } },
       )
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'User deleted successfully',
         data: remainingUsers,
         status: 200,
       })
     } else {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'User not found',
         status: 400,
       })
@@ -215,49 +212,42 @@ const actions = {
       .populate('jobs')
       .select('+password')
     if (user) {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'User fetched successfully',
         data: user,
         status: 200,
       })
     } else {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'User not found',
         status: 400,
       })
     }
   }),
   editUser: asyncMiddleware(async (req, res) => {
-    let { id } = req.params
-    let { email } = req.body
-    let user = await UserModel.find({ email: email })
-    if (user.length <= 1) {
-      let updatedUser = await UserModel.findOneAndUpdate(
-        { _id: id },
-        { ...req.body },
-        { new: true },
-      )
-      if (updatedUser) {
-        res.status(status.success.created).json({
-          message: 'Profile updated successfully',
-          status: 200,
-          data: updatedUser,
-        })
-      } else {
-        res.status(status.success.created).json({
-          message: 'Something went wrong',
-          status: 400,
-        })
-      }
-    } else {
-      res.status(status.success.created).json({
-        message: 'Email already exist',
+    let { id } = req.decoded
+    let { password } = req.body
+    let user = await UserModel.findById(id)
+    if (!user) {
+      return res.status(statusCodes.client.badRequest).json({
+        message: 'User not exists',
         status: 400,
       })
     }
+    if (password) {
+      req.body.password = await passwordHash.hashPassword(password)
+    }
+    let updatedUser = await UserModel.findOneAndUpdate(
+      { _id: id },
+      { ...req.body },
+      { new: true },
+    )
+    res.status(statusCodes.success.created).json({
+      message: 'Profile updated successfully',
+      status: 200,
+      data: updatedUser,
+    })
   }),
-
-  
   getAllUsers: asyncMiddleware(async (req, res) => {
     let { query, filter } = req.body
     let users = await UserModel.paginate(
@@ -283,125 +273,129 @@ const actions = {
       },
     )
     if (users) {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'Users fetched successfully',
         data: users,
         status: 200,
       })
     } else {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'Something went wrong',
         status: 400,
       })
     }
   }),
 
-  
   forgotPassword: asyncMiddleware(async (req, res) => {
     let { email } = req.body
     let user = await UserModel.findOne({ email: email })
 
     var val = Math.floor(1000 + Math.random() * 9000)
-    if (user) {
-      let smtpTransport = initializeSMTP()
-      let verifyCode = await VerificationModel.find({ email: email })
-      if (verifyCode.length > 0) {
-        let updatedCode = await VerificationModel.findOneAndUpdate(
-          { email: email },
-          { code: val },
-          { new: true },
-        )
-        ejs.renderFile(
-          path.join(__dirname, '../email-templates/reset-password.ejs'),
-          { code: updatedCode.code, email: updatedCode.email, name: user.name },
-          async function (err, data) {
-            if (err) {
-              res.status(status.success.created).json({
-                message: 'Something went wrong',
-                status: 400,
-              })
-            } else {
-              let mailOptions = mailOptionSetup(
-                updatedCode.email,
-                'Reset Password',
-                data,
-              )
-              try {
-                await smtpTransport.sendMail(mailOptions)
-                res.status(status.success.created).json({
-                  message: 'Please check your mail',
-                  token:
-                    'Bearer ' +
-                    (await jwt.signJwt({ email: updatedCode.email })),
-                  status: 200,
-                })
-              } catch (e) {
-                res.status(status.success.created).json({
-                  message: 'Something went wrong',
-                  status: 400,
-                })
-              }
-            }
-          },
-        )
-      } else {
-        req.body.code = val
-        let newVerfication = new VerificationModel({ ...req.body })
-        var savedVerfication = await newVerfication.save()
-        if (savedVerfication) {
-          ejs.renderFile(
-            path.join(__dirname, '../email-templates/reset-password.ejs'),
-            {
-              code: savedVerfication.code,
-              email: savedVerfication.email,
-              name: user.name,
-            },
-            async function (err, data) {
-              if (err) {
-                res.status(status.success.created).json({
-                  message: 'Something went wrong',
-                  status: 400,
-                })
-              } else {
-                let mailOptions = mailOptionSetup(
-                  savedVerfication.email,
-                  'Reset Password',
-                  data,
-                )
-                try {
-                  await smtpTransport.sendMail(mailOptions)
-                  res.status(status.success.created).json({
-                    message: 'Please check your mail',
-                    token:
-                      'Bearer ' +
-                      (await jwt.signJwt({ email: savedVerfication.email })),
-                    status: 200,
-                  })
-                } catch (e) {
-                  res.status(status.success.created).json({
-                    message: 'Something went wrong',
-                    status: 400,
-                  })
-                }
-              }
-            },
-          )
-        } else {
-          res.status(status.success.created).json({
-            message: 'Something went wrong',
-            status: 400,
-          })
-        }
-      }
-    } else {
-      res.status(status.success.created).json({
-        message: 'Invalid email',
+    if (!user) {
+      res.status(statusCodes.client.badRequest).json({
+        message: 'Invalid user',
         status: 400,
       })
     }
+
+    let smtpTransport = initializeSMTP()
+    let verifyCode = await VerificationModel.findOne({ email: email })
+    if (!verifyCode) {
+      req.body.code = val
+      let newVerfication = new VerificationModel({ ...req.body })
+      let savedVerfication = await newVerfication.save()
+
+      const data = await ejs.renderFile(
+        path.join(__dirname, '../email-templates/reset-password.ejs'),
+        {
+          code: savedVerfication.code,
+          email: savedVerfication.email,
+          name: user.name,
+        },
+        // async function (err, data) {
+        //   if (err) {
+        //     res.status(statusCodes.success.created).json({
+        //       message: 'Something went wrong',
+        //       status: 400,
+        //     })
+        //   } else {
+        // let mailOptions = mailOptionSetup(
+        //   savedVerfication.email,
+        //   'Reset Password',
+        //   data,
+        // )
+        //     try {
+        // await smtpTransport.sendMail(mailOptions)
+        // res.status(statusCodes.success.created).json({
+        //   message: 'Please check your mail',
+        //   token:
+        //     'Bearer ' +
+        //     (await jwt.signJwt({ email: savedVerfication.email })),
+        //   status: 200,
+        // })
+        //     } catch (e) {
+        //       res.status(statusCodes.success.created).json({
+        //         message: 'Something went wrong',
+        //         status: 400,
+        //       })
+        //     }
+        //   }
+        // },
+        { async: true },
+      )
+      let mailOptions = mailOptionSetup(
+        savedVerfication.email,
+        'Reset Password',
+        data,
+      )
+      await smtpTransport.sendMail(mailOptions)
+      return res.status(statusCodes.success.created).json({
+        message: 'Please check your mail',
+        token:
+          'Bearer ' + (await jwt.signJwt({ email: savedVerfication.email })),
+        status: 200,
+      })
+    }
+
+    let updatedCode = await VerificationModel.findOneAndUpdate(
+      { email: email },
+      { code: val },
+      { new: true },
+    )
+    ejs.renderFile(
+      path.join(__dirname, '../email-templates/reset-password.ejs'),
+      { code: updatedCode.code, email: updatedCode.email, name: user.name },
+      async function (err, data) {
+        if (err) {
+          res.status(statusCodes.client.badRequest).json({
+            message: 'Something went wrong',
+            status: 400,
+          })
+        } else {
+          let mailOptions = mailOptionSetup(
+            updatedCode.email,
+            'Reset Password',
+            data,
+          )
+          try {
+            await smtpTransport.sendMail(mailOptions)
+            res.status(statusCodes.success.created).json({
+              message: 'Please check your mail',
+              token:
+                'Bearer ' + (await jwt.signJwt({ email: updatedCode.email })),
+              status: 200,
+            })
+          } catch (e) {
+            res.status(statusCodes.client.badRequest).json({
+              message: 'Something went wrong',
+              status: 400,
+            })
+          }
+        }
+      },
+    )
   }),
 
-  
   codeVerification: asyncMiddleware(async (req, res) => {
     let { code } = req.body
     let { email } = req.decoded
@@ -412,20 +406,20 @@ const actions = {
     if (verifyCode && user) {
       if (verifyCode.code == code) {
         await VerificationModel.findOneAndDelete({ email: email })
-        res.status(status.success.created).json({
+        res.status(statusCodes.success.created).json({
           message: 'Code verified successfully',
           data: loggedUser,
           token: 'Bearer ' + (await jwt.signJwt({ id: user.id })),
           status: 200,
         })
       } else {
-        res.status(status.success.created).json({
+        res.status(statusCodes.success.created).json({
           message: 'Enter valid code',
           status: 400,
         })
       }
     } else {
-      res.status(status.success.created).json({
+      res.status(statusCodes.success.created).json({
         message: 'Enter valid code',
         status: 400,
       })
@@ -442,7 +436,7 @@ const actions = {
         token = refreshToken.slice(7, refreshToken.length)
         jsonwebtoken.verify(token, SECRET_KEY, async (err, decoded) => {
           if (decoded) {
-            res.status(status.success.created).json({
+            res.status(statusCodes.success.created).json({
               token: 'Bearer ' + (await jwt.signJwt({ id: id }, EXPIRES_IN)),
               status: 200,
             })
@@ -468,7 +462,7 @@ router.post('/token', jwt.verifyJwt, actions.generateAccessToken)
 
 //UPDATE
 router.put('/', jwt.verifyJwt, actions.resetPassword)
-router.put('/:id', jwt.verifyJwt, actions.editUser)
+router.put('/update', jwt.verifyJwt, actions.editUser)
 
 //DELETE
 router.delete('/', jwt.verifyJwt, actions.deleteUser)
