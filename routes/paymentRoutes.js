@@ -1,4 +1,4 @@
-const { UserModel, SeedModel, RVModel } = require('../models')
+const { UserModel, SeedModel, RVModel,BookingModel } = require('../models')
 const { jwt, asyncMiddleware, statusCodes } = require('../utils/index')
 const cloudinary = require('cloudinary').v2
 const express = require('express')
@@ -12,6 +12,7 @@ const stripe = require('stripe')(
 const { CloudinaryStorage } = require('multer-storage-cloudinary')
 
 const multer = require('multer')
+
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -192,7 +193,9 @@ const actions = {
         payment_method: paymentMethod,
       })
       if (intent) {
-        let overallDates = RV.reserved_dates ? [...RV.reserved_dates].concat(dates) : []
+        let overallDates = RV.reserved_dates ? [...RV.reserved_dates].concat(dates) : [];
+       await Book
+        await UserModel.findByIdAndUpdate({_id:id},{bookings:[]},{new:true})
         await RVModel.findByIdAndUpdate({_id:RVId},{booked:true,reserved_dates:overallDates},{new:true})
         res.status(statusCodes.success.accepted).json({
           message: 'Payment confirmed successfully',

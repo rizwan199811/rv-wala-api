@@ -9,7 +9,11 @@ var userSchema = new mongoose.Schema({
         type: String,
         default: "user",
         enum: ["super_admin", "admin", "user"]
-    }
+    },
+    bookings: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'booking'
+      }],
 },
     { strict: false, timestamps: true }
 );

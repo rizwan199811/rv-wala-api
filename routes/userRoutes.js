@@ -147,15 +147,18 @@ const actions = {
     }
   }),
   resetPassword: asyncMiddleware(async (req, res) => {
-    let { password } = req.body
-    let { id } = req.decoded
-
-    let user = await UserModel.findById(id)
-    if (user) {
-      password = await passwordUtils.hashPassword(password)
+    let { password,email } = req.body
+    let user = await UserModel.findOne({email})
+    if (!user) {
+      res.status(statusCodes.client.badRequest).json({
+        message: 'Invalid user',
+        status: 400,
+      })
+    }
+      req.body.password = await passwordHash.hashPassword(password)
       let updatedUser = await UserModel.findOneAndUpdate(
-        { _id: id },
-        { password: password },
+        { email: email },
+        { password: req.body.password },
         { new: true },
       )
       if (updatedUser) {
@@ -164,17 +167,13 @@ const actions = {
           status: 200,
         })
       } else {
-        res.status(statusCodes.success.created).json({
-          message: 'User not found',
+        res.status(statusCodes.client.badRequest).json({
+          message: 'Something went wrong',
           status: 400,
         })
       }
-    } else {
-      res.status(statusCodes.success.created).json({
-        message: 'User not found',
-        status: 400,
-      })
-    }
+     
+ 
   }),
   deleteUser: asyncMiddleware(async (req, res) => {
     let { id, page } = req.query
@@ -229,8 +228,8 @@ const actions = {
     let { password } = req.body
     let user = await UserModel.findById(id)
     if (!user) {
-      return res.status(statusCodes.client.badRequest).json({
-        message: 'User not exists',
+      res.status(statusCodes.client.badRequest).json({
+        message: 'Invalid user',
         status: 400,
       })
     }
@@ -397,33 +396,38 @@ const actions = {
   }),
 
   codeVerification: asyncMiddleware(async (req, res) => {
-    let { code } = req.body
-    let { email } = req.decoded
+    let { code,email } = req.body
     let user = await UserModel.findOne({ email: email })
+    if(!user){
+      return res.status(statusCodes.client.badRequest).json({
+         message: 'User not found',
+         status: 400,
+       })
+     }
     let verifyCode = await VerificationModel.findOne({ email: email })
     let loggedUser = user.toObject()
     delete loggedUser.password
-    if (verifyCode && user) {
+    if(!verifyCode){
+      return res.status(statusCodes.client.badRequest).json({
+         message: 'Please re-generate the code again',
+         status: 400,
+       })
+     }
+
       if (verifyCode.code == code) {
         await VerificationModel.findOneAndDelete({ email: email })
         res.status(statusCodes.success.created).json({
           message: 'Code verified successfully',
           data: loggedUser,
-          token: 'Bearer ' + (await jwt.signJwt({ id: user.id })),
-          status: 200,
+          status: 200
         })
       } else {
-        res.status(statusCodes.success.created).json({
-          message: 'Enter valid code',
+        res.status(statusCodes.client.badRequest).json({
+          message: 'Invalid code',
           status: 400,
         })
       }
-    } else {
-      res.status(statusCodes.success.created).json({
-        message: 'Enter valid code',
-        status: 400,
-      })
-    }
+
   }),
 
   generateAccessToken: asyncMiddleware(async (req, res, next) => {
@@ -461,7 +465,7 @@ router.post('/', actions.Signup)
 router.post('/token', jwt.verifyJwt, actions.generateAccessToken)
 
 //UPDATE
-router.put('/', jwt.verifyJwt, actions.resetPassword)
+router.put('/reset-password', actions.resetPassword)
 router.put('/update', jwt.verifyJwt, actions.editUser)
 
 //DELETE
