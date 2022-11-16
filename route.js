@@ -5,6 +5,7 @@ const authRoutes = require('./routes/authRoutes');
 const miscRoutes = require('./routes/miscRoutes');
 const rvRoutes = require('./routes/rvRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 
 
@@ -13,5 +14,7 @@ router.use('/auth', authRoutes);
 router.use('/misc', miscRoutes);
 router.use('/rv', rvRoutes);
 router.use('/payment', paymentRoutes);
+router.use('/booking', bookingRoutes);
+
 
 module.exports=router

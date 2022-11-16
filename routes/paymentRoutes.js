@@ -1,18 +1,15 @@
-const { UserModel, SeedModel, RVModel,BookingModel } = require('../models')
+const { UserModel, SeedModel, RVModel, BookingModel } = require('../models')
 const { jwt, asyncMiddleware, statusCodes } = require('../utils/index')
 const cloudinary = require('cloudinary').v2
 const express = require('express')
 const router = express.Router()
 const mongoose = require('mongoose')
 
-const stripe = require('stripe')(
-  process.env.STRIPE_KEY,
-)
+const stripe = require('stripe')(process.env.STRIPE_KEY)
 
 const { CloudinaryStorage } = require('multer-storage-cloudinary')
 
 const multer = require('multer')
-
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -67,7 +64,7 @@ const actions = {
       })
   }),
   attachPayment: asyncMiddleware(async (req, res) => {
-    try{
+    try {
       const { paymentMethod } = req.body
       let { id } = req.decoded
       let user = await UserModel.findById(id).lean(true)
@@ -77,7 +74,7 @@ const actions = {
           status: statusCodes.client.badRequest,
         })
       }
-  
+
       const paymentMethodAttach = await stripe.paymentMethods.attach(
         paymentMethod.id,
         {
@@ -96,13 +93,12 @@ const actions = {
           status: statusCodes.client.badRequest,
         })
       }
-    }
-     catch({message}){
+    } catch ({ message }) {
       res.status(statusCodes.server.internalServerError).json({
         message: message,
         status: statusCodes.client.badRequest,
       })
-     }
+    }
   }),
   getPaymentMethods: asyncMiddleware(async (req, res) => {
     let { id } = req.decoded
@@ -166,23 +162,24 @@ const actions = {
   }),
 
   confirmPayment: asyncMiddleware(async (req, res) => {
-    const { paymentIntent, paymentMethod,RVId,dates } = req.body
-    console.log({RVId})
-    if( !mongoose.Types.ObjectId.isValid(RVId) ) return res.status(statusCodes.client.badRequest).json({
-      message: 'ID does not exists',
-      status: statusCodes.client.badRequest,
-    });
+    const { paymentIntent, paymentMethod, RVId, dates } = req.body
+    console.log({ RVId })
+    if (!mongoose.Types.ObjectId.isValid(RVId))
+      return res.status(statusCodes.client.badRequest).json({
+        message: 'ID does not exists',
+        status: statusCodes.client.badRequest,
+      })
     try {
       let { id } = req.decoded
-      let user = await UserModel.findById(id).lean(true);
-      let RV  =await RVModel.findById(RVId).lean(true);
+      let user = await UserModel.findById(id).lean(true)
+      let RV = await RVModel.findById(RVId).lean(true)
       if (!user) {
         return res.status(statusCodes.client.badRequest).json({
           message: 'User not found',
           status: statusCodes.client.badRequest,
         })
       }
-      if(!RV){
+      if (!RV) {
         return res.status(statusCodes.client.badRequest).json({
           message: 'RV not found',
           status: statusCodes.client.badRequest,
@@ -193,10 +190,21 @@ const actions = {
         payment_method: paymentMethod,
       })
       if (intent) {
-        let overallDates = RV.reserved_dates ? [...RV.reserved_dates].concat(dates) : [];
-       await Book
-        await UserModel.findByIdAndUpdate({_id:id},{bookings:[]},{new:true})
-        await RVModel.findByIdAndUpdate({_id:RVId},{booked:true,reserved_dates:overallDates},{new:true})
+        let overallDates = RV.reserved_dates
+          ? [...RV.reserved_dates].concat(dates)
+          : []
+        await BookingModel.create({
+          dates,
+          RV: RVId,
+          user: id,
+          paymentIntent: intent,
+        })
+        await UserModel.findByIdAndUpdate({ _id: id }, {}, { new: true })
+        await RVModel.findByIdAndUpdate(
+          { _id: RVId },
+          { booked: true, reserved_dates: overallDates },
+          { new: true },
+        )
         res.status(statusCodes.success.accepted).json({
           message: 'Payment confirmed successfully',
           data: intent,
@@ -219,6 +227,64 @@ const actions = {
       // })
 
       /* Update the status of the payment to indicate confirmation */
+    } catch (err) {
+      console.error(err)
+      res.status(statusCodes.client.badRequest).json({
+        message: 'Could not confirm payment',
+        status: statusCodes.client.badRequest,
+      })
+    }
+  }),
+  cancelPayment: asyncMiddleware(async (req, res) => {
+    const { paymentIntent, paymentMethod, RVId, dates } = req.body
+    console.log({ RVId })
+    if (!mongoose.Types.ObjectId.isValid(RVId))
+      return res.status(statusCodes.client.badRequest).json({
+        message: 'ID does not exists',
+        status: statusCodes.client.badRequest,
+      })
+    try {
+      let { id } = req.decoded
+      let user = await UserModel.findById(id).lean(true)
+      let RV = await RVModel.findById(RVId).lean(true)
+      if (!user) {
+        return res.status(statusCodes.client.badRequest).json({
+          message: 'User not found',
+          status: statusCodes.client.badRequest,
+        })
+      }
+      if (!RV) {
+        return res.status(statusCodes.client.badRequest).json({
+          message: 'RV not found',
+          status: statusCodes.client.badRequest,
+        })
+      }
+
+      const intent = await stripe.paymentIntents.confirm(paymentIntent, {
+        payment_method: paymentMethod,
+      })
+      if (intent) {
+        let overallDates = RV.reserved_dates
+          ? [...RV.reserved_dates].concat(dates)
+          : []
+        await BookingModel.create({
+          dates,
+          user: id,
+          RV: RVId,
+          paymentIntent: paymentIntent,
+        })
+        // await UserModel.findByIdAndUpdate({_id:id},{bookings:[]},{new:true})
+        await RVModel.findByIdAndUpdate(
+          { _id: RVId },
+          { booked: true, reserved_dates: overallDates },
+          { new: true },
+        )
+        res.status(statusCodes.success.accepted).json({
+          message: 'Payment confirmed successfully',
+          data: intent,
+          status: statusCodes.success.accepted,
+        })
+      }
     } catch (err) {
       console.error(err)
       res.status(statusCodes.client.badRequest).json({
