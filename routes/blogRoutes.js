@@ -39,7 +39,7 @@ const actions = {
   listBlog: asyncMiddleware(async (req, res) => {
     let { page, limit } = req.body
     let { id: userID } = req.decoded
-    let user = await UserModel.findById(userID)
+    let user = await UserModel.findById({_id:userID})
     if (!user) {
       return res.status(statusCodes.client.badRequest).json({
         message: 'User not found',
