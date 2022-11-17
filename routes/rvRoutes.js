@@ -24,6 +24,7 @@ const actions = {
         ...req.body,
       })
       await newRV.save()
+      await UserModel.findByIdAndUpdate({id},{role:"admin"},{new:true});
       res.status(statusCodes.success.created).json({
         message: 'RV listed successfully',
         status: 200,

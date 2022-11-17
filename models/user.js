@@ -5,7 +5,7 @@ var userSchema = new mongoose.Schema({
         select: false,
         type: String
     },
-    role: {
+    roles: {
         type: String,
         default: "user",
         enum: ["super_admin", "admin", "user"]

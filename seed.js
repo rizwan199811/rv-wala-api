@@ -387,7 +387,23 @@ db.once('open', async function () {
   // }
 
 
-  const superAdminDocCount = await UserModel.find({ role: "super_admin" }).countDocuments()
+  const superAdminDocCount = await UserModel.find({ role: "super_admin" }).countDocuments();
+  const permissions =[ {
+    title: "Dashboard",
+    href: "/starter",
+    icon: "bi bi-speedometer2",
+  },
+  {
+    title: "RV Request",
+    href: "/rv-request",
+    icon: "bi bi-speedometer2",
+  },
+  {
+    title: "Bookings",
+    href: "/bookings",
+    icon: "bi bi-speedometer2",
+  }
+]
   console.log(superAdminDocCount)
   if (superAdminDocCount === 0) {
     try {
@@ -395,8 +411,9 @@ db.once('open', async function () {
         email: "adminuser@gmail.com",
         role: "super_admin",
         password: await passwordHash.hashPassword("pass123"),
-        userName: "rizwanAhmedSiddique",
-        fullName: "Rizwan Ahmed Siddique"
+        userName: "rizwan.ahmed",
+        fullName: "Rizwan Ahmed Siddiqui",
+        permissions
       }
    
       // Insert superAdmin User as seedData in DB
