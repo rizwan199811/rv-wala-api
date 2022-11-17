@@ -162,7 +162,7 @@ const actions = {
   }),
 
   confirmPayment: asyncMiddleware(async (req, res) => {
-    const { paymentIntent, paymentMethod, RVId, dates } = req.body
+    const { paymentIntent, paymentMethod, RVId, dates ,guests} = req.body
     console.log({ RVId })
     if (!mongoose.Types.ObjectId.isValid(RVId))
       return res.status(statusCodes.client.badRequest).json({
@@ -198,6 +198,7 @@ const actions = {
           RV: RVId,
           user: id,
           paymentIntent: intent,
+          guests
         })
         await UserModel.findByIdAndUpdate({ _id: id }, {}, { new: true })
         await RVModel.findByIdAndUpdate(
