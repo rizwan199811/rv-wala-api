@@ -38,14 +38,7 @@ const actions = {
 
   listBlog: asyncMiddleware(async (req, res) => {
     let { page, limit } = req.body
-    let { id: userID } = req.decoded
-    let user = await UserModel.findById({_id:userID})
-    if (!user) {
-      return res.status(statusCodes.client.badRequest).json({
-        message: 'User not found',
-        status: 400,
-      })
-    }
+ 
     let whereClause = {  }
     let blogs = await BlogModel.paginate(whereClause, {
       populate: 'user',
@@ -116,7 +109,7 @@ const actions = {
 }
 
 //ADD
-router.post('/list', jwt.verifyJwt, actions.listBlog)
+router.post('/list', actions.listBlog)
 router.post('/', jwt.verifyJwt, actions.createBlog)
 router.get('/:id', jwt.verifyJwt, actions.getSingleBlog)
 router.put('/:id', jwt.verifyJwt, actions.editBlog)
