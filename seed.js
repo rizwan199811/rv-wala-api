@@ -388,20 +388,16 @@ db.once('open', async function () {
 
 
   const superAdminDocCount = await UserModel.find({ role: "super_admin" }).countDocuments();
-  const permissions =[ {
-    title: "Dashboard",
-    href: "/starter",
-    icon: "bi bi-speedometer2",
-  },
+  const permissions =[ 
   {
     title: "RV Request",
     href: "/rv-request",
-    icon: "bi bi-speedometer2",
+    icon: "bi bi-truck-front-fill",
   },
   {
-    title: "Bookings",
-    href: "/bookings",
-    icon: "bi bi-speedometer2",
+    title: "Blogs",
+    href: "/blogs",
+    icon: "bi bi-card-text",
   }
 ]
   console.log(superAdminDocCount)

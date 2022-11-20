@@ -22,9 +22,9 @@ const actions = {
       req.body.user = id
       let newRV = new RVModel({
         ...req.body,
+        status:'pending'
       })
-      await newRV.save()
-      await UserModel.findByIdAndUpdate({id},{role:"admin"},{new:true});
+      await newRV.save();
       res.status(statusCodes.success.created).json({
         message: 'RV listed successfully',
         status: 200,
@@ -103,7 +103,25 @@ const actions = {
   approveRV: asyncMiddleware(async (req, res) => {
     let { id: userID } = req.decoded
     let { id: RVID } = req.params
-    let disabled
+    let disabled;
+    const permissions =[ 
+      {
+        title: "RVs",
+        href: "/rv",
+        icon: "bi bi-truck-front-fill",
+      },
+      {
+        title: "Bookings",
+        href: "/booking",
+        icon: "bi bi-card-checklist",
+      },
+      {
+        title: "Bills",
+        href: "/bills",
+        icon: "bi bi-cash-stack",
+      }
+      // bi bi-cash-stack
+    ]
     let user = await UserModel.findById(userID)
     if (!user) {
       return res.status(statusCodes.client.badRequest).json({
@@ -115,6 +133,7 @@ const actions = {
     switch (req.body.status) {
       case 'approved':
         disabled = false
+        await UserModel.findByIdAndUpdate({_id:userID},{role:"admin",permissions},{new:true});
         break
       case 'rejected':
         disabled = true
