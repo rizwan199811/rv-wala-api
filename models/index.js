@@ -4,6 +4,7 @@ const VerificationModel =require('./verification');
 const RVModel =require('./rv');
 const BookingModel =require('./booking');
 const BlogModel =require('./blog');
+const ReviewModel = require('./review');
 
 module.exports ={
     UserModel,
@@ -11,5 +12,6 @@ module.exports ={
     SeedModel,
     RVModel,
     BookingModel,
-    BlogModel
+    BlogModel,
+    ReviewModel
 }

@@ -8,7 +8,7 @@ var blogSchema = new mongoose.Schema({
         required: true
       }
 },
-{ strict: false }
+{ strict: false,timestamps:true }
 );
 
 blogSchema.plugin(mongoosePaginate);
