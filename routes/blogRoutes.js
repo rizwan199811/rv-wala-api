@@ -46,7 +46,7 @@ const actions = {
         status: 400,
       })
     }
-    let whereClause = { user: userID }
+    let whereClause = {  }
     let blogs = await BlogModel.paginate(whereClause, {
       populate: 'user',
       page: page,
