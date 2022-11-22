@@ -38,8 +38,8 @@ const actions = {
 
   listBlog: asyncMiddleware(async (req, res) => {
     let { page, limit } = req.body
- 
-    let whereClause = {  }
+
+    let whereClause = {}
     let blogs = await BlogModel.paginate(whereClause, {
       populate: 'user',
       page: page,
@@ -106,6 +106,30 @@ const actions = {
       status: 200,
     })
   }),
+  deleteBlog: asyncMiddleware(async (req, res) => {
+    let { id: userID } = req.decoded
+    let { id: blogID } = req.params
+    let user = await UserModel.findById(userID)
+    let blog = await BlogModel.findById(blogID)
+    if (!user) {
+      return res.status(statusCodes.client.badRequest).json({
+        message: 'User not found',
+        status: 400,
+      })
+    }
+    if (!blog) {
+      return res.status(statusCodes.client.badRequest).json({
+        message: 'Blog not found',
+        status: 400,
+      })
+    }
+
+    await BlogModel.findByIdAndRemove(blogID)
+    res.status(statusCodes.success.created).json({
+      message: 'Blog deleted successfully',
+      status: 200,
+    })
+  }),
 }
 
 //ADD
@@ -113,4 +137,5 @@ router.post('/list', actions.listBlog)
 router.post('/', jwt.verifyJwt, actions.createBlog)
 router.get('/:id', jwt.verifyJwt, actions.getSingleBlog)
 router.put('/:id', jwt.verifyJwt, actions.editBlog)
+router.delete('/:id', jwt.verifyJwt, actions.deleteBlog)
 module.exports = router
