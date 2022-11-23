@@ -38,7 +38,7 @@ const actions = {
   }),
 
   listRV: asyncMiddleware(async (req, res) => {
-    let { page, limit, searchCriteria, token } = req.body
+    let { page, limit, searchCriteria, token ,owner} = req.body
 
     let whereClause = {}
     if (searchCriteria.price) {

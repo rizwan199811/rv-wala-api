@@ -206,10 +206,8 @@ const actions = {
   }),
 
   getUser: asyncMiddleware(async (req, res) => {
-    let { id } = req.params
+    let { id } = req.decoded;
     let user = await UserModel.findById({ _id: id })
-      .populate('jobs')
-      .select('+password')
     if (user) {
       res.status(statusCodes.success.created).json({
         message: 'User fetched successfully',
@@ -217,7 +215,7 @@ const actions = {
         status: 200,
       })
     } else {
-      res.status(statusCodes.success.created).json({
+      res.status(statusCodes.client.badRequest).json({
         message: 'User not found',
         status: 400,
       })
@@ -457,8 +455,7 @@ const actions = {
 }
 
 //READ
-router.get('/', jwt.verifyJwt, actions.getUserById)
-router.get('/:id', jwt.verifyJwt, actions.getUser)
+router.get('/', jwt.verifyJwt, actions.getUser)
 
 //ADD
 router.post('/', actions.Signup)
