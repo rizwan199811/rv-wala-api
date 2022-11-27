@@ -107,12 +107,12 @@ const actions = {
     const permissions =[ 
       {
         title: "RVs",
-        href: "/rv",
+        href: "/rvs",
         icon: "bi bi-truck-front-fill",
       },
       {
         title: "Bookings",
-        href: "/booking",
+        href: "/bookings",
         icon: "bi bi-card-checklist",
       },
       {

@@ -128,7 +128,7 @@ const actions = {
   }),
 
   createPaymentIntent: asyncMiddleware(async (req, res) => {
-    const { paymentMethod, amount } = req.body
+    const { paymentMethod, amount, RVId, dates, guests ,bookingObj} = req.body
     const currency = 'CAD'
 
     let { id } = req.decoded
@@ -140,7 +140,7 @@ const actions = {
       })
     }
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
+      amount: Math.round(amount * 100),
       currency: currency,
       customer: user.stripeCustomer,
       payment_method: paymentMethod,
@@ -148,8 +148,18 @@ const actions = {
       description: 'Rent a RV',
     })
     if (paymentIntent) {
+      await BookingModel.create({
+        dates,
+        RV: RVId,
+        user: id,
+        paymentIntent,
+        guests,
+        status: 'pending',
+        ...bookingObj
+      })
       res.status(statusCodes.success.accepted).json({
-        message: 'Payment Intent created successfully',
+        message:
+          'Booking request recieved.We will notify you once its confirmed',
         data: paymentIntent,
         status: statusCodes.success.accepted,
       })
@@ -162,8 +172,9 @@ const actions = {
   }),
 
   confirmPayment: asyncMiddleware(async (req, res) => {
-    const { paymentIntent, paymentMethod, RVId, dates ,guests} = req.body
+    const { paymentIntent, paymentMethod, RVId, dates, bookingID } = req.body
     console.log({ RVId })
+
     if (!mongoose.Types.ObjectId.isValid(RVId))
       return res.status(statusCodes.client.badRequest).json({
         message: 'ID does not exists',
@@ -185,6 +196,13 @@ const actions = {
           status: statusCodes.client.badRequest,
         })
       }
+      const result = dates.every((val) => RV.reserved_dates.includes(val))
+      if (result) {
+        return res.status(statusCodes.client.badRequest).json({
+          message: 'RV is already reserved on your required dates',
+          status: statusCodes.client.badRequest,
+        })
+      }
 
       const intent = await stripe.paymentIntents.confirm(paymentIntent, {
         payment_method: paymentMethod,
@@ -193,17 +211,15 @@ const actions = {
         let overallDates = RV.reserved_dates
           ? [...RV.reserved_dates].concat(dates)
           : []
-        await BookingModel.create({
-          dates,
-          RV: RVId,
-          user: id,
-          paymentIntent: intent,
-          guests
-        })
-        await UserModel.findByIdAndUpdate({ _id: id }, {}, { new: true })
+        console.log({ bookingID })
+        await BookingModel.findOneAndUpdate(
+          bookingID,
+          { status: 'confirmed' },
+          { new: true },
+        )
         await RVModel.findByIdAndUpdate(
           { _id: RVId },
-          { booked: true, reserved_dates: overallDates },
+          { reserved_dates: overallDates },
           { new: true },
         )
         res.status(statusCodes.success.accepted).json({
@@ -228,10 +244,10 @@ const actions = {
       // })
 
       /* Update the status of the payment to indicate confirmation */
-    } catch (err) {
-      console.error(err)
+    } catch ({message}) {
+      console.error(message)
       res.status(statusCodes.client.badRequest).json({
-        message: 'Could not confirm payment',
+        message,
         status: statusCodes.client.badRequest,
       })
     }
