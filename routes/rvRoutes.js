@@ -50,12 +50,21 @@ const actions = {
     if (searchCriteria.class) {
       whereClause['RVInfo.type'] = searchCriteria.class
     }
-    if (token) {
+    if (token && !owner) {
       token = token.slice(7, token.length)
       let { id } = await jsonwebtoken.verify(token, 'thesecretekey')
       console.log({ id })
       whereClause['user'] = {
         $ne: id,
+      }
+    }
+    
+    if (token && owner) {
+      token = token.slice(7, token.length)
+      let { id } = await jsonwebtoken.verify(token, 'thesecretekey')
+      console.log({ id })
+      whereClause['user'] = {
+        $eq: id,
       }
     }
     if (searchCriteria.hasOwnProperty('disabled')) {
@@ -169,4 +178,5 @@ router.post('/list', actions.listRV)
 router.post('/', jwt.verifyJwt, actions.createRV)
 router.get('/:id', jwt.verifyJwt, actions.getSingleRV)
 router.post('/approve/:id', jwt.verifyJwt, actions.approveRV)
+
 module.exports = router

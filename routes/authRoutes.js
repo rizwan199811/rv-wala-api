@@ -23,7 +23,7 @@ const actions = {
       user = await UserModel.findOne({ email: email , role :{$in: ["super_admin", "admin"]}}).select('+password')
     }
     else{
-      user = await UserModel.findOne({ email: email}).select('+password')
+      user = await UserModel.findOne({ email: email, role :{$in: ["user", "admin"]}}).select('+password')
     }
     if (user) {
       console.log({password})

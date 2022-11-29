@@ -1,9 +1,28 @@
 const { UserModel, BookingModel, RVModel } = require('../models')
 const { jwt, asyncMiddleware, statusCodes } = require('../utils/index')
 const express = require('express')
+const moment = require('moment')
 const router = express.Router()
 const stripe = require('stripe')(process.env.STRIPE_KEY)
 
+const checkCancellationCriteria = (rentalStartDate, amount) => {
+  let now = moment() //now
+  let amountToReturn;
+  let startDate = moment(rentalStartDate)
+  const diff = startDate.diff(now, 'days')
+  if (diff > 30) {
+    amountToReturn = amount
+  }
+  if (diff >= 8 && diff <= 30) {
+    amountToReturn = amount * 0.5
+  }
+  if (diff <= 7) {
+    amountToReturn = 0
+  }
+
+  console.log({amountToReturn,diff})
+}
+checkCancellationCriteria('2023-01-02', 25)
 const actions = {
   bookingList: asyncMiddleware(async (req, res) => {
     try {
@@ -127,9 +146,55 @@ const actions = {
             status: statusCodes.client.badRequest,
           })
         }
-      }
-      else{
-        
+      } else {
+        if (booking.status == 'pending') {
+          await BookingModel.findByIdAndUpdate(
+            bookingID,
+            { status: 'cancelled' },
+            { new: true },
+          )
+
+          const paymentIntent = await stripe.paymentIntents.cancel(
+            booking.paymentIntent.id,
+          )
+
+          return res.status(statusCodes.success.accepted).json({
+            message: 'Booking cancelled successfully',
+            status: statusCodes.success.accepted,
+          })
+        }
+
+        if (booking.status == 'confirmed') {
+          await RVModel.findByIdAndUpdate(
+            RVID,
+            {
+              reserved_dates,
+            },
+            {
+              new: true,
+            },
+          )
+          await BookingModel.findByIdAndUpdate(
+            bookingID,
+            { status: 'cancelled' },
+            { new: true },
+          )
+          const refund = await stripe.refunds.create({
+            payment_intent: booking.paymentIntent.id,
+            amount: booking.paymentIntent.amount,
+          })
+
+          return res.status(statusCodes.success.accepted).json({
+            message: 'Booking cancelled successfully',
+            status: statusCodes.success.accepted,
+          })
+        }
+        if (booking.status == 'cancelled') {
+          return res.status(statusCodes.client.badRequest).json({
+            message: 'Booking already cancelled',
+            status: statusCodes.client.badRequest,
+          })
+        }
       }
 
       return
