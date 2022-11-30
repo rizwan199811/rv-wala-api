@@ -117,7 +117,7 @@ const actions = {
       {
         title: "RVs",
         href: "/rvs",
-        icon: "bi bi-truck-front-fill",
+        icon: "bi bi-truck",
       },
       {
         title: "Bookings",
@@ -171,6 +171,30 @@ const actions = {
       status: 200,
     })
   }),
+  editRV: asyncMiddleware(async (req, res) => {
+    let { id: userID } = req.decoded
+    let { id: RVID } = req.params
+    let user = await UserModel.findById(userID)
+    if (!user) {
+      return res.status(statusCodes.client.badRequest).json({
+        message: 'User not found',
+        status: 400,
+      })
+    }
+    let rv = await RVModel.findById(RVID).populate('user').lean(true)
+
+    if (!rv) {
+      return res.status(statusCodes.client.badRequest).json({
+        message: 'RV not found',
+        status: 400,
+      })
+    }
+    await RVModel.findByIdAndUpdate(RVID,{...req.body},{new:true})
+    res.status(statusCodes.success.created).json({
+      message: 'RV updated successfully',
+      status: 200,
+    })
+  }),
 }
 
 //ADD
@@ -178,5 +202,6 @@ router.post('/list', actions.listRV)
 router.post('/', jwt.verifyJwt, actions.createRV)
 router.get('/:id', jwt.verifyJwt, actions.getSingleRV)
 router.post('/approve/:id', jwt.verifyJwt, actions.approveRV)
+router.put('/:id', jwt.verifyJwt, actions.editRV)
 
 module.exports = router
