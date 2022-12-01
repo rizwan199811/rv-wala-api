@@ -27,6 +27,7 @@ const actions = {
   bookingList: asyncMiddleware(async (req, res) => {
     try {
       let { id } = req.decoded
+      let { page, limit} = req.body
       let user = await UserModel.findById(id).lean(true)
       if (!user) {
         return res.status(statusCodes.client.badRequest).json({
@@ -38,8 +39,8 @@ const actions = {
         { user: id },
         {
           populate: 'user RV',
-          page: 1,
-          limit: 10,
+          page,
+          limit,
           lean: true,
         },
       )
@@ -224,6 +225,6 @@ const actions = {
 }
 
 router.post('/cancel', jwt.verifyJwt, actions.cancelBooking)
-router.get('/list', jwt.verifyJwt, actions.bookingList)
+router.post('/list', jwt.verifyJwt, actions.bookingList)
 
 module.exports = router

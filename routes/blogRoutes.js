@@ -40,6 +40,7 @@ const actions = {
     let { page, limit } = req.body
 
     let whereClause = {}
+    console.log({page,limit})
     let blogs = await BlogModel.paginate(whereClause, {
       populate: 'user',
       page: page,
