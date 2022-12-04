@@ -110,8 +110,9 @@ const actions = {
     })
   }),
   approveRV: asyncMiddleware(async (req, res) => {
-    let { id: userID } = req.decoded
-    let { id: RVID } = req.params
+  
+    let { id: RVID} = req.params
+    let { user:userID}=req.body;
     let disabled;
     const permissions =[ 
       {
