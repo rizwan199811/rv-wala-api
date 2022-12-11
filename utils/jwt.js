@@ -3,7 +3,9 @@ const asyncMiddleWare = require('../utils/asyncMiddleware');
 const status = require('../utils/statusCodes');
 
 async function signJwt(data) {
-    return jwt.sign(data, 'thesecretekey', { algorithm: 'HS256' });
+    console.log({expiresIn:process.env.EXPIRES_IN,data})
+    
+    return jwt.sign(data, 'thesecretekey', { expiresIn: process.env.EXPIRES_IN });
 }
 
 async function verifyJwt(req, res, next) {

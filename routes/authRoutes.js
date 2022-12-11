@@ -40,9 +40,9 @@ const actions = {
           res.status(statusCodes.success.accepted).json({
             message: 'Logged In Successfully',
             data: loggedUser,
-            token: 'Bearer ' + (await jwt.signJwt({ id: user.id }, EXPIRES_IN)),
+            token: 'Bearer ' + (await jwt.signJwt({ id: user.id})),
             refreshToken:
-              'Bearer ' + (await jwt.signJwt({ id: user.id }, '10d')),
+              'Bearer ' + (await jwt.signJwt({ id: user.id })),
             status: 200,
           })
         } else {

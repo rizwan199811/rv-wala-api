@@ -392,7 +392,7 @@ db.once('open', async function () {
   {
     title: "RV Request",
     href: "/rv-request",
-    icon: "bi bi-truck-front-fill",
+    icon: "bi bi-truck",
   },
   {
     title: "Blogs",
