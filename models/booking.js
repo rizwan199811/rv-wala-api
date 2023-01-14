@@ -9,10 +9,14 @@ var bookingSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'rv',
     },
-    user: {
+    customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'user',
     },
+    host:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+    }
   },
   { versionKey: false, strict: false, timestamps: true },
 )

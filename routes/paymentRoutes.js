@@ -132,17 +132,24 @@ const actions = {
     const currency = 'CAD'
 
     let { id } = req.decoded
-    let user = await UserModel.findById(id).lean(true)
-    if (!user) {
+    let customer = await UserModel.findById(id).lean(true)
+    if (!customer) {
       return res.status(statusCodes.client.badRequest).json({
-        message: 'User not found',
+        message: 'Customer not found',
+        status: statusCodes.client.badRequest,
+      })
+    }
+    let RV = await RVModel.findById({_id:RVId}).lean(true)
+    if (!RV) {
+      return res.status(statusCodes.client.badRequest).json({
+        message: 'RV not found',
         status: statusCodes.client.badRequest,
       })
     }
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
       currency: currency,
-      customer: user.stripeCustomer,
+      customer: customer.stripeCustomer,
       payment_method: paymentMethod,
       // confirmation_method: "manual", // For 3D Security
       description: 'Rent a RV',
@@ -151,7 +158,8 @@ const actions = {
       await BookingModel.create({
         dates,
         RV: RVId,
-        user: id,
+        host: RV.user || '',
+        customer:id,
         paymentIntent,
         guests,
         status: 'pending',
@@ -181,22 +189,22 @@ const actions = {
         status: statusCodes.client.badRequest,
       })
     try {
-      let { id } = req.decoded
-      let user = await UserModel.findById(id).lean(true)
+      // let { id } = req.decoded
+      // let user = await UserModel.findById(id).lean(true)
       let RV = await RVModel.findById(RVId).lean(true)
-      if (!user) {
-        return res.status(statusCodes.client.badRequest).json({
-          message: 'User not found',
-          status: statusCodes.client.badRequest,
-        })
-      }
+      // if (!user) {
+      //   return res.status(statusCodes.client.badRequest).json({
+      //     message: 'User not found',
+      //     status: statusCodes.client.badRequest,
+      //   })
+      // }
       if (!RV) {
         return res.status(statusCodes.client.badRequest).json({
           message: 'RV not found',
           status: statusCodes.client.badRequest,
         })
       }
-      const result = dates.every((val) => RV.reserved_dates.includes(val))
+      const result = dates.every((val) => RV.reserved_dates && RV.reserved_dates.includes(val))
       if (result) {
         return res.status(statusCodes.client.badRequest).json({
           message: 'RV is already reserved on your required dates',
@@ -214,7 +222,7 @@ const actions = {
         console.log({ bookingID })
         await BookingModel.findOneAndUpdate(
           bookingID,
-          { status: 'confirmed' },
+          { status: 'processing' },
           { new: true },
         )
         await RVModel.findByIdAndUpdate(
@@ -316,6 +324,6 @@ router.post('/create-client', jwt.verifyJwt, actions.createClient)
 router.post('/intent', jwt.verifyJwt, actions.createPaymentIntent)
 router.post('/attach-payment', jwt.verifyJwt, actions.attachPayment)
 router.get('/fetch-payment-methods', jwt.verifyJwt, actions.getPaymentMethods)
-router.post('/confirm', jwt.verifyJwt, actions.confirmPayment)
+router.post('/confirm', actions.confirmPayment)
 
 module.exports = router
